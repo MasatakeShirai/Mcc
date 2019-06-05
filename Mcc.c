@@ -9,6 +9,12 @@
 enum{
 	TK_NUM = 256,	//integer token
 	TK_EOF,		//EOF token
+	TK_EQ,		//equal
+	TK_NE,		//not equal
+	TK_L,		//less
+	TK_LE,		//less than or equal
+	TK_G,		//greater
+	TK_GE,		//greater than or equal
 };
 
 //type of token
@@ -50,6 +56,46 @@ void tokenize(){
 	while(*p){
 		if(isspace(*p)){
 			p++;
+			continue;
+		}
+
+		if(*p=='='){
+			tokens[i].ty = TK_EQ;
+			p++;
+			i++;
+			continue;
+		}
+
+		if(*p=='!'){
+			tokens[i].ty = TK_NE;
+			p++;
+			i++;
+			continue;
+		}
+
+		if(*p=='<'){
+			p++;
+			if(*p=='='){		
+				tokens[i].ty = TK_LE;
+				p++;
+				i++;
+				continue;
+			}
+			tokens[i].ty = TK_L;
+			i++;
+			continue;
+		}
+
+		if(*p=='>'){
+			p++;
+			if(*p=='='){		
+				tokens[i].ty = TK_GE;
+				p++;
+				i++;
+				continue;
+			}
+			tokens[i].ty = TK_G;
+			i++;
 			continue;
 		}
 
