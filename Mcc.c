@@ -60,16 +60,24 @@ void tokenize(){
 		}
 
 		if(*p=='='){
-			tokens[i].ty = TK_EQ;
 			p++;
-			i++;
+			if(*p='='){
+				tokens[i].ty = TK_EQ;
+				tokens[i].input = p;
+				p++;
+				i++;
+			}
 			continue;
 		}
 
 		if(*p=='!'){
-			tokens[i].ty = TK_NE;
 			p++;
-			i++;
+			if(*p='='){
+				tokens[i].ty = TK_NE;
+				tokens[i].input = p;
+				p++;
+				i++;
+			}
 			continue;
 		}
 
@@ -77,19 +85,23 @@ void tokenize(){
 			p++;
 			if(*p=='='){		
 				tokens[i].ty = TK_LE;
+				tokens[i].input = p;
 				p++;
 				i++;
 				continue;
 			}
 			tokens[i].ty = TK_L;
+			tokens[i].input = p;
 			i++;
 			continue;
 		}
 
 		if(*p=='>'){
+			tokens[i].input = p;
 			p++;
 			if(*p=='='){		
 				tokens[i].ty = TK_GE;
+				tokens[i].input = p;
 				p++;
 				i++;
 				continue;
@@ -175,11 +187,57 @@ int consume(int ty){
 	return 1;
 }
 
+Node *expr();
+Node *equality();
+Node *relational();
+Node *add();
 Node *mul();
 Node *unary();
 Node *term();
 
 Node *expr(){
+	Node *node = equality();
+
+	return node;
+}
+
+Node *equality(){
+	Node *node = relation();
+
+	for(;;){
+		if(tokens[pos] == TK_EQ)
+			node = new_node('+', node, mul());
+
+		else if(tokents[pos] == TK_NQ)
+			node = new_node('-', node, mul());
+		
+		else
+			return node;
+	}
+}
+
+Node *relation(){
+	Node *node = add();
+
+	for(;;){
+		if(tokens[pos] == TK_L)
+			node = new_node('+', node, add());
+
+		else if(tokents[pos] == TK_LE)
+			node = new_node('-', node, add());
+
+		else if(tokens[pos] == TK_G)
+			node = new_node('+', node, add());
+
+		else if(tokents[pos] == TK_GE)
+			node = new_node('-', node, add());
+	
+		else
+			return node;
+}
+
+Node *add(){
+	
 	Node *node = mul();
 
 	for(;;){
