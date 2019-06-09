@@ -155,6 +155,12 @@ void tokenize(){
 //where to parse
 enum{
 	ND_NUM = 256,
+	ND_EQ,
+	ND_NE,
+	ND_L,
+	ND_LE,
+	ND_G,
+	ND_GE
 };
 
 typedef struct Node{
@@ -202,38 +208,39 @@ Node *expr(){
 }
 
 Node *equality(){
-	Node *node = relation();
+	Node *node = relational();
 
 	for(;;){
-		if(tokens[pos] == TK_EQ)
-			node = new_node('+', node, mul());
+		if(tokens[pos].ty == TK_EQ)
+			node = new_node(ND_EQ, node, relational());
 
-		else if(tokents[pos] == TK_NQ)
-			node = new_node('-', node, mul());
-		
+		else if(tokens[pos].ty == TK_NE)
+			node = new_node(ND_NE, node, relational());
+
 		else
 			return node;
 	}
 }
 
-Node *relation(){
+Node *relational(){
 	Node *node = add();
 
 	for(;;){
-		if(tokens[pos] == TK_L)
-			node = new_node('+', node, add());
+		if(tokens[pos].ty == TK_L)
+			node = new_node(ND_L, node, add());
 
-		else if(tokents[pos] == TK_LE)
-			node = new_node('-', node, add());
+		else if(tokens[pos].ty == TK_LE)
+			node = new_node(ND_LE, node, add());
 
-		else if(tokens[pos] == TK_G)
-			node = new_node('+', node, add());
+		else if(tokens[pos].ty == TK_G)
+			node = new_node(ND_G, node, add());
 
-		else if(tokents[pos] == TK_GE)
-			node = new_node('-', node, add());
+		else if(tokens[pos].ty == TK_GE)
+			node = new_node(ND_GE, node, add());
 	
 		else
 			return node;
+	}
 }
 
 Node *add(){
