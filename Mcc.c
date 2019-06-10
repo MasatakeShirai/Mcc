@@ -159,8 +159,6 @@ enum{
 	ND_NE,
 	ND_L,
 	ND_LE,
-	ND_G,
-	ND_GE
 };
 
 typedef struct Node{
@@ -233,10 +231,10 @@ Node *relational(){
 			node = new_node(ND_LE, node, add());
 
 		else if(consume(TK_G))
-			node = new_node(ND_G, node, add());
+			node = new_node(ND_L, add(), node);
 
 		else if(consume(TK_GE))
-			node = new_node(ND_GE, node, add());
+			node = new_node(ND_LE, add(), node);
 	
 		else
 			return node;
@@ -329,8 +327,21 @@ void gen(Node *node){
 			printf("	cmp rax, rdi\n");
 			printf("	sete al\n");
 			printf("	movzb rax, al\n");
-
-
+			break;
+		case ND_NE:
+			printf("	cmp rax, rdi\n");
+			printf("	setne al\n");
+			printf("	movzb rax, al\n");
+			break;
+		case ND_L:
+			printf("	cmp rax, rdi\n");
+			printf("	setl al\n");
+			printf("	movzb rax, al\n");
+			break;
+		case ND_LE:
+			printf("	cmp rax, rdi\n");
+			printf("	setle al\n");
+			printf("	movzb rax, al\n");
 	}
 
 	printf("	push rax\n");
