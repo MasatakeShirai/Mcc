@@ -211,10 +211,10 @@ Node *equality(){
 	Node *node = relational();
 
 	for(;;){
-		if(tokens[pos].ty == TK_EQ)
+		if(consume(TK_EQ))
 			node = new_node(ND_EQ, node, relational());
 
-		else if(tokens[pos].ty == TK_NE)
+		else if(consume(TK_NE))
 			node = new_node(ND_NE, node, relational());
 
 		else
@@ -226,16 +226,16 @@ Node *relational(){
 	Node *node = add();
 
 	for(;;){
-		if(tokens[pos].ty == TK_L)
+		if(consume(TK_L))
 			node = new_node(ND_L, node, add());
 
-		else if(tokens[pos].ty == TK_LE)
+		else if(consume(TK_LE))
 			node = new_node(ND_LE, node, add());
 
-		else if(tokens[pos].ty == TK_G)
+		else if(consume(TK_G))
 			node = new_node(ND_G, node, add());
 
-		else if(tokens[pos].ty == TK_GE)
+		else if(consume(TK_GE))
 			node = new_node(ND_GE, node, add());
 	
 		else
@@ -324,6 +324,12 @@ void gen(Node *node){
 		case '/':
 			printf("	cqo\n");
 			printf("	idiv rdi\n");
+			break;
+		case ND_EQ:
+			printf("	cmp rax, rdi\n");
+			printf("	sete al\n");
+			printf("	movzb rax, al\n");
+
 
 	}
 
