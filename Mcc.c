@@ -26,6 +26,29 @@ void vec_push(Vector *vec, void *elem){
 	vec->data[vec->len++] = elem;
 }
 
+void expect(int line, int expected, int actual){
+	if(expected == actual)
+		return;
+	fprintf(stderr, "%d: %d expeced, but got %d\n"
+			,line ,expected ,actual);
+	exit(1);
+
+}
+
+void runtest(){
+	Vector *vec = new_vector();
+	expect(__LINE__,0,vec->len);
+
+	for(int i=0; i<100; i++)
+		vec_push(vec, (void *)i);
+
+	expect(__LINE__, 100, vec->len);
+	expect(__LINE__, 0, (long) vec->data[0]);
+	expect(__LINE__, 50, (long) vec->data[50]);
+	expect(__LINE__, 99, (long) vec->data[99]);
+
+	printf("OK\n");
+}
 
 //where to tokenize
 //values representing the type of token
@@ -371,6 +394,16 @@ void gen(Node *node){
 
 }
 
+int CompareStr(char* str){
+	char* c = "-test";
+
+	for(int i=0; i<5; i++){
+		if(str[i] != c[i])
+			return 0;
+	}
+
+	return 1;
+}
 
 
 int main(int argc, char **argv){
@@ -380,6 +413,12 @@ int main(int argc, char **argv){
 	};
 
 	user_input = argv[1];
+
+	if(CompareStr(user_input)){
+		runtest();
+		return 0;
+	}
+
 	tokenize();		//tokenizing
 	Node *node = expr();	//parsing
 
