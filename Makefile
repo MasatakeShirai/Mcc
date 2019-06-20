@@ -2,6 +2,7 @@ Mcc: Mcc.c
 
 
 test: Mcc
+	./Mcc -test
 	./test.sh
 
 
