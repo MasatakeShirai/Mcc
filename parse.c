@@ -9,6 +9,7 @@
 //values representing the type of token
 enum{
 	TK_NUM = 256,	//integer token
+	TK_IDENT,	//variable token
 	TK_EOF,		//EOF token
 	TK_EQ,		//equal
 	TK_NE,		//not equal
@@ -125,6 +126,14 @@ void tokenize(){
 			tokens[i].input = p;
 			tokens[i].val = strtol(p, &p, 10);
 			i++;
+			continue;
+		}
+
+		if('a'<=*p && *p<='z'){
+			tokens[i].ty = TK_IDENT;
+			tokens[i].input = p;
+			i++;
+			p++;
 			continue;
 		}
 
