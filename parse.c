@@ -7,7 +7,8 @@
 
 //where to tokenize
 //values representing the type of token
-enum{
+typedef enum{
+	TK_RESERVED,	//synbol token
 	TK_NUM = 256,	//integer token
 	TK_EOF,		//EOF token
 	TK_EQ,		//equal
@@ -16,28 +17,57 @@ enum{
 	TK_LE,		//less than or equal
 	TK_G,		//greater
 	TK_GE,		//greater than or equal
-};
+}TokenKind;
+
+typedef struct Token Token;
 
 //type of token
-typedef struct{
-	int ty;		//type of token
-	int val;	//if "ty" is "TK_NUM", "val" mewns value
-	char *input;	//this is used to signal an error	
-} Token;
-
-//stored user input
-char *user_input;
-
-//stored torkenized user input
-Token tokens[100];
+struct Token{
+	TokenKind kind;	//type of token
+	Token *next;
+	int vail;	
+	char *str;	
+} ;
 
 
-//Tokenize the string stored in "inuser_input"
-//and store it in "tokens"
-void tokenize(){
-	char *p = user_input;
+bool consume(char op){
+	if(token->kind != TK_RESERVED || token->str[0] != op )
+		return 0;
+	token = token->next;
+	return 1;
+}
 
-	int i = 0;
+bool expect(char op){
+	if(token->kind != TK_RESERVED || token->str[0] != op )
+		error("It is not %c",op);
+	token = token->next;
+}
+
+bool expect_num(){
+	if(token->kind != TK_NUM)
+		error("It is not number");
+	int val = token->val;
+	token = token->next;
+	return val;
+}
+
+bool eof(){
+	return token->kind == TK_EOF;
+}
+
+Token *new_token(TokenKind kind, Token *cur, char *str){
+	Token *tok = calloc(1, sizeof(Token));
+	tok->kind = kind;
+	tok->str = str;
+	tok->str = str;
+	return tok;
+}
+
+Token *tokenize(char *p){
+	Token head;
+	head.next = NULL;
+	Token *cur = &head;
+		
 	while(*p){
 		if(isspace(*p)){
 			p++;
@@ -78,7 +108,7 @@ void tokenize(){
 			tokens[i].ty = TK_L;
 			tokens[i].input = p;
 			i++;
-			continue;
+			continue;i
 		}
 
 		if(*p=='>'){
@@ -97,10 +127,7 @@ void tokenize(){
 		}
 
 		if(*p=='+' || *p=='-'){
-			tokens[i].ty = *p;
-			tokens[i].input = p;
-			i++;
-			p++;
+			cur = new_token(TK_RESERVED, cur, p++)
 			continue;
 		}
 
@@ -121,19 +148,16 @@ void tokenize(){
 		}
 
 		if(isdigit(*p)){
-			tokens[i].ty = TK_NUM;
-			tokens[i].input = p;
-			tokens[i].val = strtol(p, &p, 10);
-			i++;
+			cur = new_token(TK_NUM, cur, p);
+			cur->val = strtol(p, &p, 10);
 			continue;
 		}
 
 		error_at(p, "error:can not tokenize");
 	}
-
-	tokens[i].ty = TK_EOF;
-	tokens[i].input = p;
 	
+	new_token(TK_EOF, cur, p);
+	return head.next;
 }
 
 
@@ -155,12 +179,7 @@ Node *new_node_num(int val){
 }
 
 int pos = 0;
-int consume(int ty){
-	if(tokens[pos].ty != ty)
-		return 0;
-	pos++;
-	return 1;
-}
+
 
 Node *equality();
 Node *relational();
