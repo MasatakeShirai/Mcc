@@ -10,7 +10,7 @@ int main(int argc, char **argv){
 		error("error:incorrect number of arguments");
 		return 1;
 	};
-
+	
 	user_input = argv[1];
 
 	if(CompareStr(user_input)){
@@ -18,7 +18,7 @@ int main(int argc, char **argv){
 		return 0;
 	}
 
-	tokenize();		//tokenizing
+	tokenize(user_input);		//tokenizing
 	Node *node = expr();	//parsing
 
 	printf(".intel_syntax noprefix\n");

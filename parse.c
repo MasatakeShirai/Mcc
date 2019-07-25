@@ -1,51 +1,45 @@
 #include <ctype.h>
 #include <stdarg.h>
 #include <stdio.h>
+#include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
 #include "Mcc.h"
 
 //where to tokenize
 //values representing the type of token
-typedef enum{
-	TK_RESERVED,	//synbol token
-	TK_NUM = 256,	//integer token
-	TK_EOF,		//EOF token
-	TK_EQ,		//equal
-	TK_NE,		//not equal
-	TK_L,		//less
-	TK_LE,		//less than or equal
-	TK_G,		//greater
-	TK_GE,		//greater than or equal
-}TokenKind;
-
-typedef struct Token Token;
 
 //type of token
 struct Token{
 	TokenKind kind;	//type of token
 	Token *next;
-	int vail;	
-	char *str;	
-} ;
+	int val;	
+	char *str;
+	int len;	
+};
 
+Token *token;
 
 bool consume(char op){
-	if(token->kind != TK_RESERVED || token->str[0] != op )
-		return 0;
+	if(token->kind != TK_RESERVED || 
+	   strlen(op) != token->len ||
+	   !memcmp(token->str, op, token->len))
+		return false;
 	token = token->next;
-	return 1;
+	return true;
 }
 
-bool expect(char op){
-	if(token->kind != TK_RESERVED || token->str[0] != op )
-		error("It is not %c",op);
+void expect(char op){
+	if(token->kind != TK_RESERVED || 
+	   strlen(op) != token->len ||
+	   !memcmp(token->str, op, token->len))
+		error_at(token->str, "It is not %c",op);
 	token = token->next;
 }
 
-bool expect_num(){
+int  expect_num(){
 	if(token->kind != TK_NUM)
-		error("It is not number");
+		error(token->str, "It is not number");
 	int val = token->val;
 	token = token->next;
 	return val;
@@ -59,7 +53,8 @@ Token *new_token(TokenKind kind, Token *cur, char *str){
 	Token *tok = calloc(1, sizeof(Token));
 	tok->kind = kind;
 	tok->str = str;
-	tok->str = str;
+	tok->len = strlen(str);
+	tok->next = tok;
 	return tok;
 }
 
@@ -77,21 +72,16 @@ Token *tokenize(char *p){
 		if(*p=='='){
 			p++;
 			if(*p=='='){
-				tokens[i].ty = TK_EQ;
-				tokens[i].input = p;
+				cur = new_token(TK_EQ, cur, "==");
 				p++;
-				i++;
 			}
 			continue;
 		}
 
 		if(*p=='!'){
-			p++;
-			if(*p=='='){
-				tokens[i].ty = TK_NE;
-				tokens[i].input = p;
+			if(*p+1 == '='){
+				cur = new_token(TK_NE, cur, "!=");
 				p++;
-				i++;
 			}
 			continue;
 		}
@@ -99,51 +89,37 @@ Token *tokenize(char *p){
 		if(*p=='<'){
 			p++;
 			if(*p=='='){		
-				tokens[i].ty = TK_LE;
-				tokens[i].input = p;
+				cur = new_token(TK_LE, cur, "<=");
 				p++;
-				i++;
 				continue;
 			}
-			tokens[i].ty = TK_L;
-			tokens[i].input = p;
-			i++;
-			continue;i
+			cur = new_token(TK_L, cur, "<");
+			continue;
 		}
 
 		if(*p=='>'){
-			tokens[i].input = p;
 			p++;
 			if(*p=='='){		
-				tokens[i].ty = TK_GE;
-				tokens[i].input = p;
+				cur = new_token(TK_GE, cur, ">=");
 				p++;
-				i++;
 				continue;
 			}
-			tokens[i].ty = TK_G;
-			i++;
+			cur = new_token(TK_G, cur, ">");
 			continue;
 		}
 
 		if(*p=='+' || *p=='-'){
-			cur = new_token(TK_RESERVED, cur, p++)
+			cur = new_token(TK_RESERVED, cur, p++);
 			continue;
 		}
 
 		if(*p=='*' || *p=='/'){
-			tokens[i].ty = *p;
-			tokens[i].input = p;
-			i++;
-			p++;
+			cur = new_token(TK_RESERVED, cur, p++);
 			continue;
 		}
 
 		if(*p=='(' || *p==')'){
-			tokens[i].ty = *p;
-			tokens[i].input = p;
-			i++;
-			p++;
+			cur = new_token(TK_RESERVED, cur, p++);
 			continue;
 		}
 
@@ -153,7 +129,7 @@ Token *tokenize(char *p){
 			continue;
 		}
 
-		error_at(p, "error:can not tokenize");
+		error("error:can not tokenize");
 	}
 	
 	new_token(TK_EOF, cur, p);
@@ -163,17 +139,17 @@ Token *tokenize(char *p){
 
 //where to parse
 
-Node *new_node(int ty, Node *lhs, Node *rhs){
-	Node *node = malloc(sizeof(Node));
-	node->ty = ty;
+Node *new_node(NodeKind kind, Node *lhs, Node *rhs){
+	Node *node = calloc(1, sizeof(Node));
+	node->kind = kind;
 	node->lhs = lhs;
 	node->rhs = rhs;
 	return node;
 }
 
 Node *new_node_num(int val){
-	Node *node = malloc(sizeof(Node));
-	node->ty = ND_NUM;
+	Node *node = calloc(1, sizeof(Node));
+	node->kind = ND_NUM;
 	node->val = val;
 	return node;
 }
@@ -236,10 +212,10 @@ Node *add(){
 
 	for(;;){
 		if(consume('+'))
-			node = new_node('+', node, mul());
+			node = new_node(ND_ADD, node, mul());
 
 		else if(consume('-'))
-			node = new_node('-', node, mul());
+			node = new_node(ND_SUB, node, mul());
 		
 		else
 			return node;
@@ -251,10 +227,10 @@ Node *mul(){
 
 	for(;;){
 		if(consume('*'))
-			node = new_node('*', node,unary());
+			node = new_node(ND_MUL, node,unary());
 
 		else if(consume('/'))
-			node = new_node('/', node,unary());
+			node = new_node(ND_DIV, node,unary());
 		
 		else
 			return node;
@@ -266,7 +242,7 @@ Node *unary(){
 	if(consume('+'))
 		return term();
 	if(consume('-'))
-		return new_node('-',new_node_num(0), term());
+		return new_node(ND_SUB, new_node_num(0), term());
 
 	return term();
 }
@@ -275,15 +251,15 @@ Node *term(){
 	if(consume('(')){
 		Node *node = expr();
 		if(!consume(')'))
-			error_at(tokens[pos].input, 
+			error_at(token->str, 
 				"error:open parenthesis has no corresponding closing parenthesis");
 		return node;
 	}
 
-	if(tokens[pos].ty == TK_NUM)
-		return new_node_num(tokens[pos++].val);
+	if(token->kind == TK_NUM)
+		return new_node_num(token[pos++].val);
 
-	error_at(tokens[pos].input, "this is not number or open parenthesis");
+	error_at(token->str, "this is not number or open parenthesis");
 	exit(0);
 }
 
