@@ -20,16 +20,16 @@ struct Token{
 
 Token *token;
 
-bool consume(char op){
+bool consume(char *op){
 	if(token->kind != TK_RESERVED || 
 	   strlen(op) != token->len ||
-	   !memcmp(token->str, op, token->len))
+	   memcmp(token->str, op, token->len))
 		return false;
 	token = token->next;
 	return true;
 }
 
-void expect(char op){
+void expect(char *op){
 	if(token->kind != TK_RESERVED || 
 	   strlen(op) != token->len ||
 	   !memcmp(token->str, op, token->len))
@@ -174,10 +174,10 @@ Node *equality(){
 	Node *node = relational();
 
 	for(;;){
-		if(consume(TK_EQ))
+		if(consume("=="))
 			node = new_node(ND_EQ, node, relational());
 
-		else if(consume(TK_NE))
+		else if(consume("!="))
 			node = new_node(ND_NE, node, relational());
 
 		else
@@ -189,16 +189,16 @@ Node *relational(){
 	Node *node = add();
 
 	for(;;){
-		if(consume(TK_L))
+		if(consume("<"))
 			node = new_node(ND_L, node, add());
 
-		else if(consume(TK_LE))
+		else if(consume("<="))
 			node = new_node(ND_LE, node, add());
 
-		else if(consume(TK_G))
+		else if(consume(">"))
 			node = new_node(ND_L, add(), node);
 
-		else if(consume(TK_GE))
+		else if(consume(">="))
 			node = new_node(ND_LE, add(), node);
 	
 		else
